@@ -2,6 +2,7 @@ package springexample;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 
 import com.braintreegateway.*;
 import com.braintreegateway.Transaction.Status;
@@ -43,23 +44,23 @@ public class CheckoutController {
     }
 
     @RequestMapping(value = "/checkouts", method = RequestMethod.POST)
-    public String postForm(@RequestParam("amount") String amount, @RequestParam("payment_method_nonce") String nonce, Model model, final RedirectAttributes redirectAttributes) {
-        BigDecimal decimalAmount;
-        try {
-            decimalAmount = new BigDecimal(amount);
-        } catch (NumberFormatException e) {
-            redirectAttributes.addFlashAttribute("errorDetails", "Error: 81503: Amount is an invalid format.");
-            return "redirect:checkouts";
-        }
-
+    public String postForm(@RequestParam("payment_method_nonce") String nonce, Model model, final RedirectAttributes redirectAttributes) {
         CustomerRequest customerRequest = new CustomerRequest().paymentMethodNonce(nonce);
         Result<Customer> customerResult = gateway.customer().create(customerRequest);
 
+        List<PayPalAccount> payPalAccounts = customerResult.getTarget().getPayPalAccounts();
+        List<CreditCard> creditCards = customerResult.getTarget().getCreditCards();
+        String token;
+        if(payPalAccounts != null) {
+            token = payPalAccounts.get(0).getToken();
+        } else {
+            token = creditCards.get(0).getToken();
+        }
         SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Mobile-Store").
                 trialDuration(10).
                 trialPeriod(true).
                 trialDurationUnit(Subscription.DurationUnit.DAY).
-                paymentMethodToken( customerResult.getTarget().getPayPalAccounts().get(0).getToken());
+                paymentMethodToken(token);
 
         Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
 
