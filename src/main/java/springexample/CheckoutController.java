@@ -51,7 +51,7 @@ public class CheckoutController {
         List<PayPalAccount> payPalAccounts = customerResult.getTarget().getPayPalAccounts();
         List<CreditCard> creditCards = customerResult.getTarget().getCreditCards();
         String token;
-        if(payPalAccounts != null) {
+        if(payPalAccounts != null && payPalAccounts.size() != 0) {
             token = payPalAccounts.get(0).getToken();
         } else {
             token = creditCards.get(0).getToken();
