@@ -55,7 +55,10 @@ public class CheckoutController {
         CustomerRequest customerRequest = new CustomerRequest().paymentMethodNonce(nonce);
         Result<Customer> customerResult = gateway.customer().create(customerRequest);
 
-        SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Mobile-Catalog").
+        SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Mobile-Store").
+                trialDuration(10).
+                trialPeriod(true).
+                trialDurationUnit(Subscription.DurationUnit.DAY).
                 paymentMethodToken( customerResult.getTarget().getPayPalAccounts().get(0).getToken());
 
         Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
