@@ -3,14 +3,8 @@ package springexample;
 import java.math.BigDecimal;
 import java.util.Arrays;
 
-import com.braintreegateway.BraintreeGateway;
-import com.braintreegateway.Result;
-import com.braintreegateway.Transaction;
+import com.braintreegateway.*;
 import com.braintreegateway.Transaction.Status;
-import com.braintreegateway.TransactionRequest;
-import com.braintreegateway.CreditCard;
-import com.braintreegateway.Customer;
-import com.braintreegateway.ValidationError;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -58,24 +52,23 @@ public class CheckoutController {
             return "redirect:checkouts";
         }
 
-        TransactionRequest request = new TransactionRequest()
-            .amount(decimalAmount)
-            .paymentMethodNonce(nonce)
-            .options()
-                .submitForSettlement(true)
-                .done();
+        CustomerRequest customerRequest = new CustomerRequest().paymentMethodNonce(nonce);
+        Result<Customer> customerResult = gateway.customer().create(customerRequest);
 
-        Result<Transaction> result = gateway.transaction().sale(request);
+        SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Mobile-Catalog").
+                paymentMethodToken( customerResult.getTarget().getPayPalAccounts().get(0).getToken());
 
-        if (result.isSuccess()) {
-            Transaction transaction = result.getTarget();
+        Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
+
+        if (subscriptionResult.isSuccess()) {
+            Subscription transaction = subscriptionResult.getTarget();
             return "redirect:checkouts/" + transaction.getId();
-        } else if (result.getTransaction() != null) {
-            Transaction transaction = result.getTransaction();
+        } else if (subscriptionResult.getTransaction() != null) {
+            Transaction transaction = subscriptionResult.getTransaction();
             return "redirect:checkouts/" + transaction.getId();
         } else {
             String errorString = "";
-            for (ValidationError error : result.getErrors().getAllDeepValidationErrors()) {
+            for (ValidationError error : subscriptionResult.getErrors().getAllDeepValidationErrors()) {
                errorString += "Error: " + error.getCode() + ": " + error.getMessage() + "\n";
             }
             redirectAttributes.addFlashAttribute("errorDetails", errorString);

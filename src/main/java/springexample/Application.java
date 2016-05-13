@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class Application {
-    public static String DEFAULT_CONFIG_FILENAME = "config.properties";
+    public static String DEFAULT_CONFIG_FILENAME = "/foss/braintree/braintree_spring_example/src/main/resources/config.properties";
     public static BraintreeGateway gateway;
 
     public static void main(String[] args) {
