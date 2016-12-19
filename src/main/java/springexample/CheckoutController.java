@@ -1,6 +1,5 @@
 package springexample;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,7 +56,7 @@ public class CheckoutController {
             token = creditCards.get(0).getToken();
         }
         SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Mobile-Store").
-                trialDuration(10).
+                trialDuration(1).
                 trialPeriod(true).
                 trialDurationUnit(Subscription.DurationUnit.DAY).
                 paymentMethodToken(token);
@@ -66,6 +65,9 @@ public class CheckoutController {
 
         if (subscriptionResult.isSuccess()) {
             Subscription transaction = subscriptionResult.getTarget();
+            Subscription subscription = subscriptionResult.getTarget();
+            Result<Subscription> subscriptionUpdate = gateway.subscription().update(subscription.getId(), new SubscriptionRequest().addOns().add().inheritedFromId("Apptizer-POS-API").done().done());
+            subscriptionUpdate.isSuccess();
             return "redirect:checkouts/" + transaction.getId();
         } else if (subscriptionResult.getTransaction() != null) {
             Transaction transaction = subscriptionResult.getTransaction();
@@ -80,25 +82,24 @@ public class CheckoutController {
         }
     }
 
-    @RequestMapping(value = "/checkouts/{transactionId}")
-    public String getTransaction(@PathVariable String transactionId, Model model) {
-        Transaction transaction;
-        CreditCard creditCard;
-        Customer customer;
+    @RequestMapping(value = "/checkouts/{subscriptionId}")
+    public String getTransaction(@PathVariable String subscriptionId, Model model) {
+        Subscription subscription;
+        String planId;
 
         try {
-            transaction = gateway.transaction().find(transactionId);
-            creditCard = transaction.getCreditCard();
-            customer = transaction.getCustomer();
+            subscription = gateway.subscription().find(subscriptionId);
+            subscriptionId = subscription.getId();
+            planId = subscription.getPlanId();
         } catch (Exception e) {
             System.out.println("Exception: " + e);
             return "redirect:/checkouts";
         }
 
-        model.addAttribute("isSuccess", Arrays.asList(TRANSACTION_SUCCESS_STATUSES).contains(transaction.getStatus()));
-        model.addAttribute("transaction", transaction);
-        model.addAttribute("creditCard", creditCard);
-        model.addAttribute("customer", customer);
+        model.addAttribute("isSuccess", subscription.getStatus().equals(Subscription.Status.PENDING));
+        model.addAttribute("subscription", subscription);
+        model.addAttribute("subscriptionId", subscriptionId);
+        model.addAttribute("planId", planId);
 
         return "checkouts/show";
     }
