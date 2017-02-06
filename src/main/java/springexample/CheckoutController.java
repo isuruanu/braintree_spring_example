@@ -52,9 +52,9 @@ public class CheckoutController {
         PaymentMethod paymentMethod = result.getTarget();
         String token = paymentMethod.getToken();
 
+        // Happens at apptizer
         Result<Customer> biz_001 = gateway.customer().update(customerResult.getTarget().getId(), new CustomerRequest().id("BIZ_007"));
 
-        // Happens at apptizer
         SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Bronze").
                 paymentMethodToken(token).addOns().add().inheritedFromId("Apptizer-App-Set-Up-Add-On").done().done();
         Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
