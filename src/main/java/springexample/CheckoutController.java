@@ -45,7 +45,7 @@ public class CheckoutController {
     @RequestMapping(value = "/checkouts", method = RequestMethod.POST)
     public String postForm(@RequestParam("payment_method_nonce") String nonce, Model model, final RedirectAttributes redirectAttributes) {
 
-        Result<Customer> customerResult = gateway.customer().create(new CustomerRequest().id("iso-test4").paymentMethodNonce(nonce));
+        Result<Customer> customerResult = gateway.customer().create(new CustomerRequest().id("iso-test5").paymentMethodNonce(nonce));
 
 
         PaymentMethod paymentMethod = customerResult.getTarget().getPaymentMethods().get(0);
@@ -58,7 +58,7 @@ public class CheckoutController {
 
 
         SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Bronze").
-                paymentMethodToken(token);
+                paymentMethodToken(token).addOns().add().inheritedFromId("Apptizer-App-Set-Up-Add-On").done().done();
         Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
 
         if (subscriptionResult.isSuccess()) {
