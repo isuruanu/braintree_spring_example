@@ -45,18 +45,16 @@ public class CheckoutController {
     @RequestMapping(value = "/checkouts", method = RequestMethod.POST)
     public String postForm(@RequestParam("payment_method_nonce") String nonce, Model model, final RedirectAttributes redirectAttributes) {
 
-        Result<Customer> customerResult = gateway.customer().create(new CustomerRequest().id("iso-test5").paymentMethodNonce(nonce));
+        // happens at iso
+        Result<Customer> customerResult = gateway.customer().create(new CustomerRequest());
 
-
-        PaymentMethod paymentMethod = customerResult.getTarget().getPaymentMethods().get(0);
-        String customerId = paymentMethod.getCustomerId();
+        Result<? extends PaymentMethod> result = gateway.paymentMethod().create(new PaymentMethodRequest().customerId(customerResult.getTarget().getId()).paymentMethodNonce(nonce));
+        PaymentMethod paymentMethod = result.getTarget();
         String token = paymentMethod.getToken();
 
-        TransactionRequest request = new TransactionRequest();
-        request.amount(new BigDecimal(10)).paymentMethodToken(token);
-        Result<Transaction> sale = gateway.transaction().sale(request);
+        Result<Customer> biz_001 = gateway.customer().update(customerResult.getTarget().getId(), new CustomerRequest().id("BIZ_007"));
 
-
+        // Happens at apptizer
         SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Bronze").
                 paymentMethodToken(token).addOns().add().inheritedFromId("Apptizer-App-Set-Up-Add-On").done().done();
         Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
