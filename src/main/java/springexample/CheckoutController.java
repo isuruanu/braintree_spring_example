@@ -1,5 +1,6 @@
 package springexample;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,29 +39,26 @@ public class CheckoutController {
     public String checkout(Model model) {
         String clientToken = gateway.clientToken().generate();
         model.addAttribute("clientToken", clientToken);
-
         return "checkouts/new";
     }
 
     @RequestMapping(value = "/checkouts", method = RequestMethod.POST)
     public String postForm(@RequestParam("payment_method_nonce") String nonce, Model model, final RedirectAttributes redirectAttributes) {
-        CustomerRequest customerRequest = new CustomerRequest().paymentMethodNonce(nonce);
-        Result<Customer> customerResult = gateway.customer().create(customerRequest);
 
-        List<PayPalAccount> payPalAccounts = customerResult.getTarget().getPayPalAccounts();
-        List<CreditCard> creditCards = customerResult.getTarget().getCreditCards();
-        String token;
-        if(payPalAccounts != null && payPalAccounts.size() != 0) {
-            token = payPalAccounts.get(0).getToken();
-        } else {
-            token = creditCards.get(0).getToken();
-        }
-        SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Mobile-Store").
-                trialDuration(1).
-                trialPeriod(true).
-                trialDurationUnit(Subscription.DurationUnit.DAY).
+        Result<Customer> customerResult = gateway.customer().create(new CustomerRequest().id("iso-test4").paymentMethodNonce(nonce));
+
+
+        PaymentMethod paymentMethod = customerResult.getTarget().getPaymentMethods().get(0);
+        String customerId = paymentMethod.getCustomerId();
+        String token = paymentMethod.getToken();
+
+        TransactionRequest request = new TransactionRequest();
+        request.amount(new BigDecimal(10)).paymentMethodToken(token);
+        Result<Transaction> sale = gateway.transaction().sale(request);
+
+
+        SubscriptionRequest subscriptionRequest = new SubscriptionRequest().planId("Apptizer-Bronze").
                 paymentMethodToken(token);
-
         Result<Subscription> subscriptionResult = gateway.subscription().create(subscriptionRequest);
 
         if (subscriptionResult.isSuccess()) {
